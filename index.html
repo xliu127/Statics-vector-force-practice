@@ -144,17 +144,17 @@ header p{font-size:.8rem;opacity:.75;margin-top:2px}
     <div class="input-grid">
       <div class="inp-wrap">
         <label>x-component</label>
-        <input type="number" step="any" id="rx" placeholder="?" oninput="liveCheck('rx','vrx')"/>
+        <input type="number" step="any" id="rx" placeholder="?" oninput="liveCheck('rx','rx')"/>
         <div class="inp-hint" id="hrx"></div>
       </div>
       <div class="inp-wrap">
         <label>y-component</label>
-        <input type="number" step="any" id="ry" placeholder="?" oninput="liveCheck('ry','vry')"/>
+        <input type="number" step="any" id="ry" placeholder="?" oninput="liveCheck('ry','ry')"/>
         <div class="inp-hint" id="hry"></div>
       </div>
       <div class="inp-wrap">
         <label>z-component</label>
-        <input type="number" step="any" id="rz" placeholder="?" oninput="liveCheck('rz','vrz')"/>
+        <input type="number" step="any" id="rz" placeholder="?" oninput="liveCheck('rz','rz')"/>
         <div class="inp-hint" id="hrz"></div>
       </div>
     </div>
@@ -339,17 +339,28 @@ function renderPoints(){
 
 // ─── Input checking ──────────────────────────────────────────────────────────
 function liveCheck(inputId, ansKey){
-  const v=parseFloat(document.getElementById(inputId).value);
   const inp=document.getElementById(inputId);
+  const v=parseFloat(inp.value);
   const hint=document.getElementById('h'+inputId);
-  if(isNaN(v)||document.getElementById(inputId).value===''){
-    inp.className=''; if(hint) hint.textContent=''; return;
+  if(isNaN(v)||inp.value===''){
+    inp.className=''; 
+    if(hint){hint.textContent=''; hint.className='inp-hint';}
+    return;
   }
   const correct=ans[ansKey];
-  const tol = (ansKey==='mag')?0.005 : (ansKey.startsWith('u')?0.0005 : (ansKey.startsWith('f')?0.05:0.05));
-  const ok=Math.abs(v-correct)<=tol;
-  inp.className=ok?'correct':'wrong';
-  if(hint){hint.textContent=ok?'✓':'✗';hint.className='inp-hint '+(ok?'ok':'err');}
+  const tol = ansKey==='mag' ? 0.001 : ansKey.startsWith('u') ? 0.001 : 0.05;
+  const ok = Math.abs(v - correct) <= tol;
+  console.log(ansKey, 'entered:', v, 'correct:', correct, 'diff:', Math.abs(v-correct), 'tol:', tol, 'ok:', ok);
+  inp.className = ok ? 'correct' : 'wrong';
+  if(hint){
+    hint.textContent = ok ? '✓' : '✗';
+    hint.className = 'inp-hint ' + (ok ? 'ok' : 'err');
+    hint.style.color = ok ? '#27ae60' : '#e74c3c';
+  }
+}
+
+function compOk(val, correct, tol){
+  return Math.abs(val - correct) <= tol;
 }
 
 function checkAll(){
@@ -369,7 +380,7 @@ function checkAll(){
             parseFloat(document.getElementById('rz').value)];
   if(isNaN(rv[0])||isNaN(rv[1])||isNaN(rv[2])) s1ok=false;
   else{
-    if(Math.abs(rv[0]-ans.rx)>0.05||Math.abs(rv[1]-ans.ry)>0.05||Math.abs(rv[2]-ans.rz)>0.05) s1ok=false;
+    if(!compOk(rv[0],ans.rx,0.05)||!compOk(rv[1],ans.ry,0.05)||!compOk(rv[2],ans.rz,0.05)) s1ok=false;
   }
   const b1=document.getElementById('step1-banner');
   b1.className='check-banner '+(s1ok?'ok':'err');
@@ -381,7 +392,7 @@ function checkAll(){
   const s2ok=!isNaN(mv)&&Math.abs(mv-ans.mag)<=0.005;
   const b2=document.getElementById('step2-banner');
   b2.className='check-banner '+(s2ok?'ok':'err');
-  b2.textContent=s2ok?`✓ Correct! |r| = ${ans.mag.toFixed(4)} units`
+  b2.textContent=s2ok?`✓ Correct! |r| = ${ans.mag.toFixed(3)} units`
     :`✗ Try: √(${ans.rx}²+ ${ans.ry}²+ ${ans.rz}²) = √${(ans.rx**2+ans.ry**2+ans.rz**2)}`;
 
   // Step 3
@@ -390,7 +401,7 @@ function checkAll(){
             parseFloat(document.getElementById('uz').value)];
   let s3ok=true;
   if(isNaN(uv[0])||isNaN(uv[1])||isNaN(uv[2])) s3ok=false;
-  else if(Math.abs(uv[0]-ans.ux)>0.0005||Math.abs(uv[1]-ans.uy)>0.0005||Math.abs(uv[2]-ans.uz)>0.0005) s3ok=false;
+  else if(!compOk(uv[0],ans.ux,0.0005)||!compOk(uv[1],ans.uy,0.0005)||!compOk(uv[2],ans.uz,0.0005)) s3ok=false;
   const b3=document.getElementById('step3-banner');
   b3.className='check-banner '+(s3ok?'ok':'err');
   if(s3ok) b3.textContent=`✓ Perfect! û = (${ans.ux.toFixed(4)}, ${ans.uy.toFixed(4)}, ${ans.uz.toFixed(4)})`;
@@ -405,7 +416,7 @@ function checkAll(){
             parseFloat(document.getElementById('fz').value)];
   let s4ok=true;
   if(isNaN(fv[0])||isNaN(fv[1])||isNaN(fv[2])) s4ok=false;
-  else if(Math.abs(fv[0]-ans.fx)>0.05||Math.abs(fv[1]-ans.fy)>0.05||Math.abs(fv[2]-ans.fz)>0.05) s4ok=false;
+  else if(!compOk(fv[0],ans.fx,0.05)||!compOk(fv[1],ans.fy,0.05)||!compOk(fv[2],ans.fz,0.05)) s4ok=false;
   const b4=document.getElementById('step4-banner');
   b4.className='check-banner '+(s4ok?'ok':'err');
   if(s4ok) b4.textContent=`✓ Correct! F = (${ans.fx.toFixed(2)}î + ${ans.fy.toFixed(2)}ĵ + ${ans.fz.toFixed(2)}k̂) N`;
@@ -424,7 +435,7 @@ function revealAnswer(){
   document.getElementById('rx').value=ans.rx;
   document.getElementById('ry').value=ans.ry;
   document.getElementById('rz').value=ans.rz;
-  document.getElementById('mag').value=ans.mag.toFixed(4);
+  document.getElementById('mag').value=ans.mag.toFixed(3);
   document.getElementById('ux').value=ans.ux.toFixed(4);
   document.getElementById('uy').value=ans.uy.toFixed(4);
   document.getElementById('uz').value=ans.uz.toFixed(4);
