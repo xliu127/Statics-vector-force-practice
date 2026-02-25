@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Position & Unit Vector Practice</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;color:#222;min-height:100vh}
+header{background:#1a3a5c;color:#fff;padding:16px 28px;display:flex;align-items:center;gap:14px}
+header h1{font-size:1.15rem;font-weight:700}
+header p{font-size:.8rem;opacity:.75;margin-top:2px}
+.container{max-width:960px;margin:24px auto;padding:0 14px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.full{grid-column:1/-1}
+.card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:20px 22px}
+.card h2{font-size:.95rem;font-weight:700;color:#1a3a5c;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.card h2 .icon{font-size:1rem}
+
+/* Points display */
+.points-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.point-box{flex:1;min-width:130px;border-radius:8px;padding:12px 16px;text-align:center}
+.point-box.pt-a{background:#e8f4fd;border:2px solid #2980b9}
+.point-box.pt-b{background:#fef9e7;border:2px solid #f39c12}
+.point-box .pt-label{font-size:.75rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.7;margin-bottom:4px}
+.point-box .pt-coords{font-size:1.1rem;font-weight:700;font-family:monospace}
+.point-box.pt-a .pt-coords{color:#1a6eb5}
+.point-box.pt-b .pt-coords{color:#d68910}
+
+/* 3D Canvas */
+#canvas3d{width:100%;height:280px;border-radius:8px;background:#f8fafc;cursor:grab;display:block;border:1px solid #dde}
+#canvas3d:active{cursor:grabbing}
+
+/* Steps */
+.step{border-left:3px solid #1a3a5c;padding:10px 14px;margin-bottom:12px;background:#f7f9fc;border-radius:0 7px 7px 0}
+.step-num{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a3a5c;margin-bottom:5px}
+.step-title{font-size:.92rem;font-weight:700;color:#222;margin-bottom:6px}
+.step-desc{font-size:.84rem;color:#555;line-height:1.55;margin-bottom:10px}
+.formula-box{background:#1a3a5c;color:#fff;border-radius:6px;padding:9px 14px;font-family:monospace;font-size:.88rem;margin-bottom:10px;line-height:1.6}
+.formula-box .highlight{color:#f1c40f}
+
+/* Input grid */
+.input-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.inp-wrap{display:flex;flex-direction:column;gap:3px}
+.inp-wrap label{font-size:.75rem;font-weight:700;color:#555;text-align:center}
+.inp-wrap input{width:100%;padding:8px 6px;border:2px solid #b0bec5;border-radius:6px;font-size:.9rem;text-align:center;font-family:monospace;transition:border-color .2s}
+.inp-wrap input:focus{outline:none;border-color:#1a3a5c}
+.inp-wrap input.correct{border-color:#27ae60;background:#eafaf1}
+.inp-wrap input.wrong{border-color:#e74c3c;background:#fdecea}
+.inp-wrap .inp-hint{font-size:.7rem;text-align:center;min-height:14px;margin-top:1px}
+.inp-wrap .inp-hint.ok{color:#27ae60}
+.inp-wrap .inp-hint.err{color:#e74c3c}
+
+/* single input row */
+.input-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.input-row label{font-size:.86rem;color:#555;min-width:60px}
+.input-row input{width:100px;padding:8px 10px;border:2px solid #b0bec5;border-radius:6px;font-size:.9rem;text-align:center;font-family:monospace}
+.input-row input:focus{outline:none;border-color:#1a3a5c}
+.input-row input.correct{border-color:#27ae60;background:#eafaf1}
+.input-row input.wrong{border-color:#e74c3c;background:#fdecea}
+.result-icon{font-size:1.2rem;min-width:20px}
+
+/* Buttons */
+.btn{border:none;border-radius:6px;padding:9px 18px;font-size:.84rem;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-p{background:#1a3a5c;color:#fff}.btn-p:hover{background:#14304d}
+.btn-s{background:#e8eef4;color:#1a3a5c}.btn-s:hover{background:#d2dce8}
+.btn-g{background:#27ae60;color:#fff}.btn-g:hover{background:#1e8449}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* Score / result */
+.check-banner{border-radius:7px;padding:10px 14px;font-size:.88rem;margin-top:10px;display:none}
+.check-banner.ok{background:#eafaf1;border:1px solid #a9dfbf;color:#1e8449;display:block}
+.check-banner.err{background:#fdecea;border:1px solid #f5b7b1;color:#c0392b;display:block}
+.check-banner.info{background:#eaf4fb;border:1px solid #aed6f1;color:#1a5276;display:block}
+
+/* Progress bar */
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.prog-bar{flex:1;height:8px;background:#e0e6ed;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:#27ae60;border-radius:4px;transition:width .4s}
+.prog-label{font-size:.8rem;color:#555;min-width:50px;text-align:right}
+
+/* Score summary */
+.score-summary{display:flex;gap:12px;flex-wrap:wrap}
+.score-item{flex:1;min-width:80px;background:#f0f4f8;border-radius:7px;padding:10px;text-align:center}
+.score-item .s-val{font-size:1.4rem;font-weight:800;color:#1a3a5c}
+.score-item .s-lbl{font-size:.72rem;color:#777;margin-top:2px}
+
+/* Tooltip hint */
+.hint-text{font-size:.78rem;color:#888;margin-top:6px;line-height:1.4;display:none}
+.hint-text.show{display:block}
+
+/* Mode selector */
+.mode-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.mode-btn{border:2px solid #b0bec5;background:#fff;border-radius:7px;padding:7px 14px;font-size:.82rem;font-weight:600;cursor:pointer;color:#555;transition:all .15s}
+.mode-btn.active{border-color:#1a3a5c;background:#1a3a5c;color:#fff}
+
+@media(max-width:640px){.container{grid-template-columns:1fr}.full{grid-column:1}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📐 Position Vector, Unit Vector & Force Practice</h1>
+    <p>Randomly generated 3D points — practice writing position vectors, computing unit vectors, and expressing forces in Cartesian form</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Points & 3D view -->
+  <div class="card full">
+    <h2><span class="icon">🎯</span> Given Points</h2>
+    <div class="mode-row">
+      <button class="mode-btn active" onclick="setMode('AB')" id="mAB">From A to B</button>
+      <button class="mode-btn" onclick="setMode('BA')" id="mBA">From B to A</button>
+      <button class="mode-btn" onclick="setMode('free')" id="mfree">Custom Origin</button>
+    </div>
+    <div class="points-row" id="points-display"></div>
+    <canvas id="canvas3d"></canvas>
+    <div class="btn-row">
+      <button class="btn btn-g" onclick="newProblem()">🎲 New Problem</button>
+      <button class="btn btn-s" onclick="toggleHints()">💡 Show Formula Hints</button>
+    </div>
+    <div class="hint-text" id="global-hint">
+      <strong>Position Vector r<sub>AB</sub></strong> = (x<sub>B</sub>−x<sub>A</sub>)î + (y<sub>B</sub>−y<sub>A</sub>)ĵ + (z<sub>B</sub>−z<sub>A</sub>)k̂<br/>
+      <strong>Magnitude |r|</strong> = √(rₓ²+ r_y²+ r_z²)<br/>
+      <strong>Unit Vector û<sub>AB</sub></strong> = r<sub>AB</sub> / |r<sub>AB</sub>| = (rₓ/|r|)î + (r_y/|r|)ĵ + (r_z/|r|)k̂<br/>
+      <strong>Force Vector F</strong> = F · û = (F·û<sub>x</sub>)î + (F·û<sub>y</sub>)ĵ + (F·û<sub>z</sub>)k̂<br/>
+      Note: Each component of the unit vector is dimensionless and |û| = 1 always.
+    </div>
+  </div>
+
+  <!-- Step 1: Position vector -->
+  <div class="card">
+    <h2><span class="icon">➡️</span> Step 1: Position Vector</h2>
+    <div class="step">
+      <div class="step-num">Concept</div>
+      <div class="step-title" id="s1-title">Position Vector r<sub>AB</sub></div>
+      <div class="step-desc">Subtract the <em>tail</em> point coordinates from the <em>tip</em> point coordinates component by component:</div>
+      <div class="formula-box" id="s1-formula">
+        r<sub>AB</sub> = (<span class="highlight">x<sub>B</sub> − x<sub>A</sub></span>)î + (<span class="highlight">y<sub>B</sub> − y<sub>A</sub></span>)ĵ + (<span class="highlight">z<sub>B</sub> − z<sub>A</sub></span>)k̂
+      </div>
+    </div>
+    <p style="font-size:.85rem;color:#555;margin-bottom:6px">Enter each component of the position vector:</p>
+    <div class="input-grid">
+      <div class="inp-wrap">
+        <label>x-component</label>
+        <input type="number" step="any" id="rx" placeholder="?" oninput="liveCheck('rx','vrx')"/>
+        <div class="inp-hint" id="hrx"></div>
+      </div>
+      <div class="inp-wrap">
+        <label>y-component</label>
+        <input type="number" step="any" id="ry" placeholder="?" oninput="liveCheck('ry','vry')"/>
+        <div class="inp-hint" id="hry"></div>
+      </div>
+      <div class="inp-wrap">
+        <label>z-component</label>
+        <input type="number" step="any" id="rz" placeholder="?" oninput="liveCheck('rz','vrz')"/>
+        <div class="inp-hint" id="hrz"></div>
+      </div>
+    </div>
+    <div id="step1-banner" class="check-banner"></div>
+  </div>
+
+  <!-- Step 2: Magnitude -->
+  <div class="card">
+    <h2><span class="icon">📏</span> Step 2: Magnitude</h2>
+    <div class="step">
+      <div class="step-num">Concept</div>
+      <div class="step-title">Magnitude |r<sub>AB</sub>|</div>
+      <div class="step-desc">Apply the 3D distance formula (Pythagorean theorem in 3D):</div>
+      <div class="formula-box">
+        |r| = √( r<sub>x</sub>² + r<sub>y</sub>² + r<sub>z</sub>² )
+      </div>
+    </div>
+    <p style="font-size:.85rem;color:#555;margin-bottom:6px">Enter the magnitude (round to 3 decimal places):</p>
+    <div class="input-row">
+      <label>|r| =</label>
+      <input type="number" step="any" id="mag" placeholder="?" oninput="liveCheck('mag','vmag')"/>
+      <span style="font-size:.85rem;color:#888">units</span>
+      <div class="result-icon" id="hmag"></div>
+    </div>
+    <div id="step2-banner" class="check-banner"></div>
+  </div>
+
+  <!-- Step 3: Unit vector -->
+  <div class="card full">
+    <h2><span class="icon">🧭</span> Step 3: Unit Vector</h2>
+    <div class="step">
+      <div class="step-num">Concept</div>
+      <div class="step-title" id="s3-title">Unit Vector û<sub>AB</sub></div>
+      <div class="step-desc">Divide each component of the position vector by the magnitude. Each component should be between −1 and +1, and the sum of squares must equal 1.</div>
+      <div class="formula-box">
+        û = (r<sub>x</sub>/|r|)î + (r<sub>y</sub>/|r|)ĵ + (r<sub>z</sub>/|r|)k̂ &nbsp;→&nbsp; <span class="highlight">|û| must = 1</span>
+      </div>
+    </div>
+    <p style="font-size:.85rem;color:#555;margin-bottom:6px">Enter each component of the unit vector (round to 4 decimal places):</p>
+    <div class="input-grid" style="max-width:420px">
+      <div class="inp-wrap">
+        <label>î component</label>
+        <input type="number" step="any" id="ux" placeholder="?" oninput="liveCheck('ux','vux')"/>
+        <div class="inp-hint" id="hux"></div>
+      </div>
+      <div class="inp-wrap">
+        <label>ĵ component</label>
+        <input type="number" step="any" id="uy" placeholder="?" oninput="liveCheck('uy','vuy')"/>
+        <div class="inp-hint" id="huy"></div>
+      </div>
+      <div class="inp-wrap">
+        <label>k̂ component</label>
+        <input type="number" step="any" id="uz" placeholder="?" oninput="liveCheck('uz','vuz')"/>
+        <div class="inp-hint" id="huz"></div>
+      </div>
+    </div>
+    <div id="step3-banner" class="check-banner"></div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="checkAll()">✔ Check All Steps</button>
+      <button class="btn btn-s" onclick="revealAnswer()">👁 Reveal Answer</button>
+      <button class="btn btn-g" onclick="newProblem()">🎲 New Problem</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Force in Cartesian -->
+  <div class="card full">
+    <h2><span class="icon">⚡</span> Step 4: Force Vector in Cartesian Form</h2>
+    <div class="step">
+      <div class="step-num">Concept</div>
+      <div class="step-title">F = F · û</div>
+      <div class="step-desc">If a force of magnitude <strong id="force-mag-display">—</strong> N acts along the direction from A to B, express it as a Cartesian vector by scaling the unit vector:</div>
+      <div class="formula-box">
+        <span class="highlight">F</span> = F · û = F·(û<sub>x</sub>î + û<sub>y</sub>ĵ + û<sub>z</sub>k̂) = <span class="highlight">(F·û<sub>x</sub>)î + (F·û<sub>y</sub>ĵ) + (F·û<sub>z</sub>)k̂</span>
+      </div>
+    </div>
+    <p style="font-size:.85rem;color:#555;margin-bottom:6px">Enter each component of the force vector (round to 2 decimal places):</p>
+    <div class="input-grid" style="max-width:420px">
+      <div class="inp-wrap">
+        <label>F<sub>x</sub> (N)</label>
+        <input type="number" step="any" id="fx" placeholder="?" oninput="liveCheck('fx','fx')"/>
+        <div class="inp-hint" id="hfx"></div>
+      </div>
+      <div class="inp-wrap">
+        <label>F<sub>y</sub> (N)</label>
+        <input type="number" step="any" id="fy" placeholder="?" oninput="liveCheck('fy','fy')"/>
+        <div class="inp-hint" id="hfy"></div>
+      </div>
+      <div class="inp-wrap">
+        <label>F<sub>z</sub> (N)</label>
+        <input type="number" step="any" id="fz" placeholder="?" oninput="liveCheck('fz','fz')"/>
+        <div class="inp-hint" id="hfz"></div>
+      </div>
+    </div>
+    <div id="step4-banner" class="check-banner"></div>
+  </div>
+
+  <!-- Score -->
+  <div class="card full">
+    <h2><span class="icon">🏆</span> Your Progress</h2>
+    <div class="progress-row">
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="prog-label" id="prog-label">0 / 0</div>
+    </div>
+    <div class="score-summary" style="margin-top:12px">
+      <div class="score-item"><div class="s-val" id="sc-att">0</div><div class="s-lbl">Attempted</div></div>
+      <div class="score-item"><div class="s-val" id="sc-cor">0</div><div class="s-lbl">Fully Correct</div></div>
+      <div class="score-item"><div class="s-val" id="sc-str">—</div><div class="s-lbl">Streak 🔥</div></div>
+      <div class="score-item"><div class="s-val" id="sc-pct">—</div><div class="s-lbl">Accuracy</div></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let A={x:0,y:0,z:0}, B={x:0,y:0,z:0};
+let forceMag=0;
+let ans={rx:0,ry:0,rz:0,mag:0,ux:0,uy:0,uz:0,fx:0,fy:0,fz:0};
+let mode='AB'; // AB, BA, free
+let scoreAtt=0, scoreCor=0, streak=0, lastChecked=false;
+let hintsVisible=false;
+// 3D rotation
+let rotX=0.25, rotY=0.55, dragging=false, lastMX=0, lastMY=0;
+
+// ─── Problem generation ──────────────────────────────────────────────────────
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+function newProblem(){
+  // Generate distinct coordinates, range −8 to 8, avoid zero for interest
+  const coords=()=>{let v;do{v=rand(-8,8);}while(v===0);return v;};
+  A={x:coords(),y:coords(),z:coords()};
+  do{B={x:coords(),y:coords(),z:coords()};}
+  while(B.x===A.x&&B.y===A.y&&B.z===A.z);
+
+  // random force magnitude 100–999 N, multiples of 25 for clean numbers
+  forceMag = (Math.floor(rand(4,39)) * 25);
+  document.getElementById('force-mag-display').textContent = forceMag;
+  computeAnswers();
+  renderPoints();
+  clearInputs();
+  drawScene();
+  lastChecked=false;
+}
+
+function computeAnswers(){
+  let rx,ry,rz;
+  if(mode==='AB'){
+    rx=B.x-A.x; ry=B.y-A.y; rz=B.z-A.z;
+  } else if(mode==='BA'){
+    rx=A.x-B.x; ry=A.y-B.y; rz=A.z-B.z;
+  } else {
+    // custom origin = A, tip = B same as AB
+    rx=B.x-A.x; ry=B.y-A.y; rz=B.z-A.z;
+  }
+  const m=Math.sqrt(rx*rx+ry*ry+rz*rz);
+  ans={rx,ry,rz,mag:m,ux:rx/m,uy:ry/m,uz:rz/m,
+       fx:forceMag*(rx/m), fy:forceMag*(ry/m), fz:forceMag*(rz/m)};
+}
+
+function renderPoints(){
+  const d=document.getElementById('points-display');
+  const fromPt = mode==='BA' ? B : A;
+  const toPt   = mode==='BA' ? A : B;
+  const fromLbl= mode==='BA' ? 'B (Tail)' : 'A (Tail)';
+  const toLbl  = mode==='BA' ? 'A (Tip)'  : 'B (Tip)';
+  d.innerHTML=`
+    <div class="point-box pt-a">
+      <div class="pt-label">${fromLbl} — Origin</div>
+      <div class="pt-coords">(${fromPt.x}, ${fromPt.y}, ${fromPt.z})</div>
+    </div>
+    <div style="display:flex;align-items:center;font-size:1.5rem;color:#999">→</div>
+    <div class="point-box pt-b">
+      <div class="pt-label">${toLbl} — Head</div>
+      <div class="pt-coords">(${toPt.x}, ${toPt.y}, ${toPt.z})</div>
+    </div>`;
+
+  // Update step labels
+  const sub = mode==='BA'?'BA':'AB';
+  document.getElementById('s1-title').innerHTML=`Position Vector r<sub>${sub}</sub>`;
+  document.getElementById('s3-title').innerHTML=`Unit Vector û<sub>${sub}</sub>`;
+}
+
+// ─── Input checking ──────────────────────────────────────────────────────────
+function liveCheck(inputId, ansKey){
+  const v=parseFloat(document.getElementById(inputId).value);
+  const inp=document.getElementById(inputId);
+  const hint=document.getElementById('h'+inputId);
+  if(isNaN(v)||document.getElementById(inputId).value===''){
+    inp.className=''; if(hint) hint.textContent=''; return;
+  }
+  const correct=ans[ansKey];
+  const tol = (ansKey==='mag')?0.005 : (ansKey.startsWith('u')?0.0005 : (ansKey.startsWith('f')?0.05:0.05));
+  const ok=Math.abs(v-correct)<=tol;
+  inp.className=ok?'correct':'wrong';
+  if(hint){hint.textContent=ok?'✓':'✗';hint.className='inp-hint '+(ok?'ok':'err');}
+}
+
+function checkAll(){
+  let allOk=true;
+  // Step 1
+  let s1ok=true;
+  ['rx','ry','rz'].forEach(k=>{
+    const v=parseFloat(document.getElementById(k).value);
+    const ok=!isNaN(v)&&Math.abs(v-ans['v'+k])<=0.05 || !isNaN(v)&&Math.abs(v-ans[k])<=0.05;
+    if(!ok) s1ok=false; allOk=false&&allOk;
+    liveCheck(k,'v'+k==='vrx'?'rx':k==='ry'?'ry':'rz');
+  });
+  // re-check properly
+  s1ok=true;
+  const rv=[parseFloat(document.getElementById('rx').value),
+            parseFloat(document.getElementById('ry').value),
+            parseFloat(document.getElementById('rz').value)];
+  if(isNaN(rv[0])||isNaN(rv[1])||isNaN(rv[2])) s1ok=false;
+  else{
+    if(Math.abs(rv[0]-ans.rx)>0.05||Math.abs(rv[1]-ans.ry)>0.05||Math.abs(rv[2]-ans.rz)>0.05) s1ok=false;
+  }
+  const b1=document.getElementById('step1-banner');
+  b1.className='check-banner '+(s1ok?'ok':'err');
+  b1.textContent=s1ok?`✓ Correct! r = (${ans.rx}, ${ans.ry}, ${ans.rz})`
+    :`✗ Check: tail→tip means tip coordinates minus tail coordinates.`;
+
+  // Step 2
+  const mv=parseFloat(document.getElementById('mag').value);
+  const s2ok=!isNaN(mv)&&Math.abs(mv-ans.mag)<=0.005;
+  const b2=document.getElementById('step2-banner');
+  b2.className='check-banner '+(s2ok?'ok':'err');
+  b2.textContent=s2ok?`✓ Correct! |r| = ${ans.mag.toFixed(4)} units`
+    :`✗ Try: √(${ans.rx}²+ ${ans.ry}²+ ${ans.rz}²) = √${(ans.rx**2+ans.ry**2+ans.rz**2)}`;
+
+  // Step 3
+  const uv=[parseFloat(document.getElementById('ux').value),
+            parseFloat(document.getElementById('uy').value),
+            parseFloat(document.getElementById('uz').value)];
+  let s3ok=true;
+  if(isNaN(uv[0])||isNaN(uv[1])||isNaN(uv[2])) s3ok=false;
+  else if(Math.abs(uv[0]-ans.ux)>0.0005||Math.abs(uv[1]-ans.uy)>0.0005||Math.abs(uv[2]-ans.uz)>0.0005) s3ok=false;
+  const b3=document.getElementById('step3-banner');
+  b3.className='check-banner '+(s3ok?'ok':'err');
+  if(s3ok) b3.textContent=`✓ Perfect! û = (${ans.ux.toFixed(4)}, ${ans.uy.toFixed(4)}, ${ans.uz.toFixed(4)})`;
+  else {
+    const mag2=Math.sqrt((uv[0]||0)**2+(uv[1]||0)**2+(uv[2]||0)**2);
+    b3.textContent=`✗ Each component = r_component ÷ |r|. Verify |û|≈1. Your |û| = ${isNaN(mag2)?'?':mag2.toFixed(4)}`;
+  }
+
+  // Step 4
+  const fv=[parseFloat(document.getElementById('fx').value),
+            parseFloat(document.getElementById('fy').value),
+            parseFloat(document.getElementById('fz').value)];
+  let s4ok=true;
+  if(isNaN(fv[0])||isNaN(fv[1])||isNaN(fv[2])) s4ok=false;
+  else if(Math.abs(fv[0]-ans.fx)>0.05||Math.abs(fv[1]-ans.fy)>0.05||Math.abs(fv[2]-ans.fz)>0.05) s4ok=false;
+  const b4=document.getElementById('step4-banner');
+  b4.className='check-banner '+(s4ok?'ok':'err');
+  if(s4ok) b4.textContent=`✓ Correct! F = (${ans.fx.toFixed(2)}î + ${ans.fy.toFixed(2)}ĵ + ${ans.fz.toFixed(2)}k̂) N`;
+  else b4.textContent=`✗ Hint: multiply each unit vector component by F = ${forceMag} N. e.g. Fx = ${forceMag} × û_x`;
+
+  if(!lastChecked){
+    scoreAtt++;
+    if(s1ok&&s2ok&&s3ok&&s4ok){scoreCor++;streak++;}else{streak=0;}
+    lastChecked=true;
+    updateScore();
+  }
+  return s1ok&&s2ok&&s3ok&&s4ok;
+}
+
+function revealAnswer(){
+  document.getElementById('rx').value=ans.rx;
+  document.getElementById('ry').value=ans.ry;
+  document.getElementById('rz').value=ans.rz;
+  document.getElementById('mag').value=ans.mag.toFixed(4);
+  document.getElementById('ux').value=ans.ux.toFixed(4);
+  document.getElementById('uy').value=ans.uy.toFixed(4);
+  document.getElementById('uz').value=ans.uz.toFixed(4);
+  ['rx','ry','rz'].forEach(k=>liveCheck(k,k));
+  liveCheck('mag','mag');
+  ['ux','uy','uz'].forEach(k=>liveCheck(k,k));
+  const b=document.getElementById('step3-banner');
+  b.className='check-banner info';
+  b.textContent=`Answer revealed. Study the values, then try a new problem!`;
+}
+
+function clearInputs(){
+  ['rx','ry','rz','mag','ux','uy','uz','fx','fy','fz'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.value=''; el.className='';
+  });
+  ['hrx','hry','hrz','hux','huy','huz','hfx','hfy','hfz'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent='';el.className='inp-hint';}
+  });
+  document.getElementById('hmag').textContent='';
+  ['step1-banner','step2-banner','step3-banner','step4-banner'].forEach(id=>{
+    document.getElementById(id).className='check-banner';
+    document.getElementById(id).textContent='';
+  });
+}
+
+function setMode(m){
+  mode=m;
+  ['AB','BA','free'].forEach(mm=>{
+    document.getElementById('m'+mm).classList.toggle('active',mm===m);
+  });
+  computeAnswers();
+  renderPoints();
+  clearInputs();
+}
+
+function toggleHints(){
+  hintsVisible=!hintsVisible;
+  document.getElementById('global-hint').classList.toggle('show',hintsVisible);
+}
+
+function updateScore(){
+  document.getElementById('sc-att').textContent=scoreAtt;
+  document.getElementById('sc-cor').textContent=scoreCor;
+  document.getElementById('sc-str').textContent=streak>0?streak+'🔥':streak;
+  document.getElementById('sc-pct').textContent=scoreAtt?Math.round(scoreCor/scoreAtt*100)+'%':'—';
+  const pct=scoreAtt?scoreCor/scoreAtt*100:0;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-label').textContent=`${scoreCor} / ${scoreAtt}`;
+}
+
+// ─── 3D Canvas ───────────────────────────────────────────────────────────────
+const cv=document.getElementById('canvas3d');
+const ctx=cv.getContext('2d');
+
+function resize(){
+  const r=cv.getBoundingClientRect();
+  cv.width=r.width*devicePixelRatio;
+  cv.height=r.height*devicePixelRatio;
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  drawScene();
+}
+
+function project(x,y,z){
+  // Rotate around Y then X — z mapped to screen vertical (up)
+  const cy2=Math.cos(rotY),sy2=Math.sin(rotY);
+  const cx2=Math.cos(rotX),sx2=Math.sin(rotX);
+  // Remap: treat z as the "up" axis by swapping z↔y in world space before rotation
+  const wx=x, wy=z, wz=-y;
+  const x1=wx*cy2+wz*sy2, z1=-wx*sy2+wz*cy2;
+  const y1=wy*cx2-z1*sx2, z2=wy*sx2+z1*cx2;
+  const scale=22, W=cv.width/devicePixelRatio, H=cv.height/devicePixelRatio;
+  return {sx:W/2+x1*scale, sy:H/2-y1*scale, z:z2};
+}
+
+function arrow3d(x1,y1,z1,x2,y2,z2,color,label,dashed){
+  const p1=project(x1,y1,z1), p2=project(x2,y2,z2);
+  ctx.beginPath();
+  if(dashed) ctx.setLineDash([5,3]); else ctx.setLineDash([]);
+  ctx.strokeStyle=color; ctx.lineWidth=2;
+  ctx.moveTo(p1.sx,p1.sy); ctx.lineTo(p2.sx,p2.sy); ctx.stroke();
+  // arrowhead
+  const ang=Math.atan2(p2.sy-p1.sy,p2.sx-p1.sx);
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.fillStyle=color;
+  ctx.moveTo(p2.sx,p2.sy);
+  ctx.lineTo(p2.sx-10*Math.cos(ang-0.35),p2.sy-10*Math.sin(ang-0.35));
+  ctx.lineTo(p2.sx-10*Math.cos(ang+0.35),p2.sy-10*Math.sin(ang+0.35));
+  ctx.closePath(); ctx.fill();
+  if(label){
+    ctx.fillStyle=color; ctx.font='bold 12px Segoe UI';
+    ctx.fillText(label,p2.sx+5,p2.sy-5);
+  }
+}
+
+function dot3d(x,y,z,color,label,r=5){
+  const p=project(x,y,z);
+  ctx.beginPath();
+  ctx.arc(p.sx,p.sy,r,0,Math.PI*2);
+  ctx.fillStyle=color; ctx.fill();
+  if(label){
+    ctx.fillStyle='#222'; ctx.font='bold 13px Segoe UI';
+    ctx.fillText(label,p.sx+7,p.sy-5);
+  }
+}
+
+function gridLine(x1,y1,z1,x2,y2,z2,color){
+  const p1=project(x1,y1,z1),p2=project(x2,y2,z2);
+  ctx.beginPath();ctx.setLineDash([]);
+  ctx.strokeStyle=color;ctx.lineWidth=.8;
+  ctx.moveTo(p1.sx,p1.sy);ctx.lineTo(p2.sx,p2.sy);ctx.stroke();
+}
+
+function drawScene(){
+  const W=cv.width/devicePixelRatio, H=cv.height/devicePixelRatio;
+  ctx.clearRect(0,0,W,H);
+  ctx.setLineDash([]);
+
+  // Grid
+  for(let i=-8;i<=8;i+=2){
+    gridLine(i,-8,-8,i,8,-8,'#e0e6ed');
+    gridLine(-8,i,-8,8,i,-8,'#e0e6ed');
+    gridLine(i,-8,-8,i,-8,8,'#e0e6ed');
+    gridLine(-8,i,-8,-8,i,8,'#e0e6ed');
+  }
+
+  // Axes: green=x, blue=y, orange=z (vertical)
+  arrow3d(0,0,0,9,0,0,'#27ae60','x');
+  arrow3d(0,0,0,0,9,0,'#2980b9','y');
+  arrow3d(0,0,0,0,0,9,'#e67e22','z');
+  // Negative axes dashed
+  arrow3d(0,0,0,-4,0,0,'#27ae60','',true);
+  arrow3d(0,0,0,0,-4,0,'#2980b9','',true);
+  arrow3d(0,0,0,0,0,-4,'#e67e22','',true);
+
+  // Dashed projection lines to show 3D position of A and B
+  [A,B].forEach(P=>{
+    ctx.setLineDash([3,3]);ctx.strokeStyle='#bbb';ctx.lineWidth=1;
+    // Drop to XY plane
+    const p1=project(P.x,P.y,0),p2=project(P.x,P.y,P.z);
+    ctx.beginPath();ctx.moveTo(p1.sx,p1.sy);ctx.lineTo(p2.sx,p2.sy);ctx.stroke();
+    // X projection
+    const px=project(P.x,0,0),py=project(0,P.y,0);
+    const pxy=project(P.x,P.y,0);
+    ctx.beginPath();ctx.moveTo(px.sx,px.sy);ctx.lineTo(pxy.sx,pxy.sy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(py.sx,py.sy);ctx.lineTo(pxy.sx,pxy.sy);ctx.stroke();
+  });
+
+  // Position vector arrow A→B (or B→A)
+  const fromPt=mode==='BA'?B:A, toPt=mode==='BA'?A:B;
+  arrow3d(fromPt.x,fromPt.y,fromPt.z, toPt.x,toPt.y,toPt.z,'#8e44ad','r');
+
+  // Points
+  dot3d(A.x,A.y,A.z,'#2980b9',`A(${A.x},${A.y},${A.z})`);
+  dot3d(B.x,B.y,B.z,'#e67e22',`B(${B.x},${B.y},${B.z})`);
+
+  // Origin
+  dot3d(0,0,0,'#333','O',4);
+}
+
+// Drag to rotate
+cv.addEventListener('mousedown',e=>{dragging=true;lastMX=e.clientX;lastMY=e.clientY;});
+window.addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  rotY+=(e.clientX-lastMX)*.012;
+  rotX+=(e.clientY-lastMY)*.012;
+  lastMX=e.clientX;lastMY=e.clientY;
+  drawScene();
+});
+window.addEventListener('mouseup',()=>dragging=false);
+// Touch
+cv.addEventListener('touchstart',e=>{dragging=true;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;});
+cv.addEventListener('touchmove',e=>{
+  if(!dragging) return; e.preventDefault();
+  rotY+=(e.touches[0].clientX-lastMX)*.012;
+  rotX+=(e.touches[0].clientY-lastMY)*.012;
+  lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;
+  drawScene();
+},{passive:false});
+cv.addEventListener('touchend',()=>dragging=false);
+
+window.addEventListener('resize',resize);
+resize();
+newProblem();
+</script>
+</body>
+</html>
