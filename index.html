@@ -87,7 +87,7 @@ header p{font-size:.8rem;opacity:.75;margin-top:2px}
     </div>
     <div class="hint-text" id="global-hint">
       <strong>Position Vector r<sub>AB</sub></strong> = (x<sub>B</sub>−x<sub>A</sub>)î + (y<sub>B</sub>−y<sub>A</sub>)ĵ + (z<sub>B</sub>−z<sub>A</sub>)k̂<br/>
-      <strong>Magnitude |r|</strong> = √(rx² + ry² + rz²)<br/>
+      <strong>Magnitude |r|</strong> = sqrt(rx*rx + ry*ry + rz*rz)<br/>
       <strong>Unit Vector û</strong> = r / |r| = (rx/|r|)î + (ry/|r|)ĵ + (rz/|r|)k̂<br/>
       <strong>Force Vector F</strong> = F · û = (F·ûx)î + (F·ûy)ĵ + (F·ûz)k̂<br/>
       Note: |û| = 1 always.
@@ -131,7 +131,7 @@ header p{font-size:.8rem;opacity:.75;margin-top:2px}
       <div class="step-num">Concept</div>
       <div class="step-title">Magnitude |r|</div>
       <div class="step-desc">Apply the 3D Pythagorean theorem:</div>
-      <div class="formula-box">|r| = √( rx² + ry² + rz² )</div>
+      <div class="formula-box">|r| = sqrt( rx*rx + ry*ry + rz*rz )</div>
     </div>
     <p style="font-size:.85rem;color:#555;margin-bottom:6px">Enter the magnitude (round to 3 decimal places):</p>
     <div class="input-grid" style="max-width:180px">
@@ -321,7 +321,7 @@ function checkAll(){
   const b2=document.getElementById('b2');
   b2.className='check-banner '+(s2?'ok':'err');
   b2.textContent=s2?`✓ Correct! |r| = ${ans.mag.toFixed(3)} units`
-    :`✗ Try: √(${ans.rx}² + ${ans.ry}² + ${ans.rz}²) = √${ans.rx**2+ans.ry**2+ans.rz**2}`;
+    :`✗ Try: sqrt(${ans.rx}*${ans.rx} + ${ans.ry}*${ans.ry} + ${ans.rz}*${ans.rz}) = sqrt(${ans.rx**2+ans.ry**2+ans.rz**2})`;
 
   const b3=document.getElementById('b3');
   b3.className='check-banner '+(s3?'ok':'err');
